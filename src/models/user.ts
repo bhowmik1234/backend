@@ -69,4 +69,3 @@ schema.virtual("age").get(function(){
 })
 
 export const User = mongoose.model<IUser>("User", schema);
-User.age
