@@ -4,6 +4,7 @@ import { errorMiddleware } from "./middlewares/error.js";
 import NodeCache from "node-cache";
 import { config } from "dotenv";
 import morgan from "morgan";
+import Stripe from "stripe";
 // routes
 import userRoute from "./routes/user.js";
 import productRoute from "./routes/product.js";
@@ -12,9 +13,11 @@ import payementRoute from "./routes/payement.js";
 import dashboardRoute from "./routes/stats.js";
 const app = express();
 const PORT = 3000;
+const stripeKey = process.env.STRIPE_KEY || "";
 config({
     path: "./.env",
 });
+export const stripe = new Stripe(stripeKey);
 export const myCache = new NodeCache();
 connectdb();
 app.use(express.json());
