@@ -8,10 +8,10 @@ const router = express.Router();
 router.post('/new', newUser);
 
 // route ~ /api/v1/user/all
-router.post('/all', getallUsers);
+router.get('/all', adminOnly, getallUsers);
 
 // route ~ /api/v1/user/{dynamic id}
-router.get('/:id', adminOnly, getUser);
+// router.get('/:id', adminOnly, getAllUser);
 router.route('/:id').get(getUser).delete(adminOnly, deleteUser);
 
 

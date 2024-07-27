@@ -47,7 +47,7 @@ export const getallUsers = TryCatch(async(req, res, next)=>{
 
     return res.status(200).json({
         success: true,
-        message: user
+        users: user
     })
 
 })
@@ -61,7 +61,7 @@ export const getUser = TryCatch(async(req, res, next)=>{
     }
     return res.status(200).json({
         success: true,
-        message: user
+        user: user
     })
 
 })

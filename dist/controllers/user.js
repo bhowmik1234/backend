@@ -30,7 +30,7 @@ export const getallUsers = TryCatch(async (req, res, next) => {
     const user = await User.find({});
     return res.status(200).json({
         success: true,
-        message: user
+        users: user
     });
 });
 export const getUser = TryCatch(async (req, res, next) => {
@@ -41,7 +41,7 @@ export const getUser = TryCatch(async (req, res, next) => {
     }
     return res.status(200).json({
         success: true,
-        message: user
+        user: user
     });
 });
 export const deleteUser = TryCatch(async (req, res, next) => {
