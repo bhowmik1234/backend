@@ -6,6 +6,11 @@ import ErrorHandler from "../utils/utiliy-class.js";
 import { rm } from "fs";
 import { myCache } from "../app.js";
 import { invalidateCache } from "../utils/features.js";
+import { WishList } from "../models/wishlist.js";
+import { User } from "../models/user.js";
+import mongoose from "mongoose";
+import { processOrder } from "./order.js";
+
 
 export const newProduct = TryCatch(
   async (req: Request<{}, {}, newProductRequestBody>, res, next) => {
@@ -207,43 +212,89 @@ export const getAllProducts = TryCatch(
   }
 );
 
-// export const getAllProducts = TryCatch(async(req:Request<{},{}, searchRequestQuery>, res, next)=>{
 
-//     const { search, sort, category, price } = req.query;
-//     const page = Number(req.query.page) || 1;
+export const addToWishList = TryCatch(async (req, res, next) => {
+  const { id: userId } = req.query;
+  const productId = req.params.id;
 
-//     const pagelimit = Number(process.env.PAGE_LIMIT) || 8;
-//     const skip = pagelimit * (page-1);
+  // const productObjectId = new mongoose.Types.ObjectId(productId);
+  const product = await Product.findById(productId);
+  if(!product) return next(new ErrorHandler("Product Not Found", 404));
 
-//     const baseQuery: BaseQuery = {};
+  const wish = await WishList.findOne({userId});
 
-//     if (search)
-//         baseQuery.name = {
-//           $regex: search,
-//           $options: "i",
-//         };
 
-//     if(price){
-//         baseQuery.price = {
-//             $lte: Number(price)
-//         }
-//     }
-//     if(category) baseQuery.category = category;
+  if (!wish) {
+    await WishList.create({ userId, productId: [productId] });
+  } else {
+    const productIds = wish.productId.map(id => id.toString());
+    if (!productIds.includes(productId.toString())) {
+      wish.productId.push(product._id); 
+      await wish.save();
+      invalidateCache({ wishlist: true });
 
-//     const productPromise = Product.find(baseQuery).sort(
-//         sort && {price:sort==="asc" ? 1 : -1 }
-//     ).limit(pagelimit).skip(skip);
+    }
+  }
 
-//     const [product, filterOnlyProduct] = await Promise.all([
-//         productPromise,
-//         Product.find(baseQuery),
-//     ]);
+  return res.status(200).json({
+    success: true,
+    message: "Added to wishList.",
+  });
+});
 
-//     const totalpage = Math.ceil(filterOnlyProduct.length / pagelimit );
+export const myWishList = TryCatch(async(req, res, next)=>{
+  const {id} = req.query;
+  let products;
+  if(myCache.has("wishlist")){
+    products = JSON.parse(myCache.get("wishlist") as string);
+  }
+  else{
+    const wish = await WishList.findOne({userId: id});
+    if (!wish) {
+      return res.status(404).json({
+        success: false,
+        message: 'Wishlist not found',
+      });
+    }
+  
+    const productPromises = wish.productId.map(async (productId) => {
+      return await Product.findById(productId);
+    });
+  
+    products = await Promise.all(productPromises);
+    myCache.set("wishlist", JSON.stringify(products));
+  }
 
-//     return res.status(200).json({
-//         success: true,
-//         product,
-//         totalpage
-//     })
-// });
+
+  return res.status(200).json({
+    success: true,
+    message: "your wishlist",
+    WishList: products
+  });
+
+})
+
+export const deleteWishList = TryCatch(async(req, res, next)=>{
+  const { id: userId } = req.query;
+  const { id: productId } = req.params;
+
+  const wish = await WishList.findOneAndUpdate(
+    { userId },
+    { $pull: { productId: productId } },
+    { new: true } // Return the updated document
+  );
+
+  if (!wish) {
+    return res.status(404).json({
+      success: false,
+      message: 'Wishlist not found or product not in wishlist',
+    });
+  }
+  invalidateCache({wishlist: true});
+  return res.status(200).json({
+    success: true,
+    message: "Removed from wishlist",
+  });
+
+})
+

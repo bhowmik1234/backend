@@ -8,11 +8,12 @@
     "start": "node dist/app.js",
     "build": "tsc",
     "watch": "tsc -w",
-    "dev": "nodemon dist/app.js"
+    "dev": "npx tsx watch ./src/app.ts"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cloudinary": "^2.3.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",

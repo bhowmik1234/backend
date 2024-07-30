@@ -21,6 +21,10 @@ const schema = new mongoose.Schema({
         required: [true, "Please enter Category"],
         // trim: true,
     },
+    // description: {
+    //   type: String,
+    //   required: [true, "Please enter Description"],
+    // },
 }, {
     timestamps: true,
 });

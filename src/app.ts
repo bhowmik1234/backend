@@ -6,6 +6,7 @@ import { config } from "dotenv";
 import morgan from "morgan";
 import Stripe from "stripe";
 import cors from "cors";
+import { v2 as cloudinary } from "cloudinary";
 // routes
 import userRoute from "./routes/user.js";
 import productRoute from "./routes/product.js"
@@ -20,6 +21,11 @@ config({
     path: "./.env",
 })
 const stripeKey = process.env.STRIPE_KEY || "";
+cloudinary.config({
+    cloud_name: "dv1vpvfkg",
+    api_key: "425872355748933",
+    api_secret: "XWXjfWfxjjPLKgtCFxxO0sXK0T8",
+  });
 
 
 export const stripe = new Stripe(stripeKey);

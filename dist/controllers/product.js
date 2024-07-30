@@ -4,6 +4,7 @@ import ErrorHandler from "../utils/utiliy-class.js";
 import { rm } from "fs";
 import { myCache } from "../app.js";
 import { invalidateCache } from "../utils/features.js";
+import { WishList } from "../models/wishlist.js";
 export const newProduct = TryCatch(async (req, res, next) => {
     const { name, category, price, stock } = req.body;
     const photo = req.file;
@@ -169,34 +170,49 @@ export const getAllProducts = TryCatch(async (req, res, next) => {
         totalPage,
     });
 });
-// export const getAllProducts = TryCatch(async(req:Request<{},{}, searchRequestQuery>, res, next)=>{
-//     const { search, sort, category, price } = req.query;
-//     const page = Number(req.query.page) || 1;
-//     const pagelimit = Number(process.env.PAGE_LIMIT) || 8;
-//     const skip = pagelimit * (page-1);
-//     const baseQuery: BaseQuery = {};
-//     if (search)
-//         baseQuery.name = {
-//           $regex: search,
-//           $options: "i",
-//         };
-//     if(price){
-//         baseQuery.price = {
-//             $lte: Number(price)
-//         }
-//     }
-//     if(category) baseQuery.category = category;
-//     const productPromise = Product.find(baseQuery).sort(
-//         sort && {price:sort==="asc" ? 1 : -1 }
-//     ).limit(pagelimit).skip(skip);
-//     const [product, filterOnlyProduct] = await Promise.all([
-//         productPromise,
-//         Product.find(baseQuery),
-//     ]);
-//     const totalpage = Math.ceil(filterOnlyProduct.length / pagelimit );
-//     return res.status(200).json({
-//         success: true,
-//         product,
-//         totalpage
-//     })
-// });
+export const addToWishList = TryCatch(async (req, res, next) => {
+    const { id: userId } = req.query;
+    const productId = req.params.id;
+    const product = await Product.findById(productId);
+    if (!product)
+        return next(new ErrorHandler("Product Not Found", 404));
+    let wishlist = await WishList.findOne({ userId });
+    console.log(wishlist);
+    if (!wishlist) {
+        wishlist = await WishList.create({ userId, productId: [productId] });
+    }
+    else {
+        // if (!wishlist.productId.includes(product)) {
+        wishlist.productId.push(product);
+        await wishlist.save();
+        // }
+    }
+    return res.status(200).json({
+        success: true,
+        wishlist,
+        message: "Product added to wishlist successfully",
+    });
+});
+export const myWishList = TryCatch(async (req, res, next) => {
+    const { id } = req.query;
+    const wish = await WishList.findOne({ userId: id });
+    return res.status(200).json({
+        success: true,
+        message: "your wishlist",
+        wish,
+    });
+});
+export const deleteWishList = TryCatch(async (req, res, next) => {
+    const { id, productId } = req.body;
+    const wish = await WishList.updateOne({ _id: id }, { $pull: { productId } });
+    if (wish.modifiedCount === 0) {
+        return res.status(404).json({
+            success: false,
+            message: 'Product not found in wishlist or wishlist not found',
+        });
+    }
+    return res.status(200).json({
+        success: true,
+        message: "removed from wishlist",
+    });
+});

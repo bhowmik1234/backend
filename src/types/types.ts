@@ -45,6 +45,7 @@ export type InvalidateCacheProps = {
   admin?: boolean;
   userId?: string;
   orderId?: string;
+  wishlist?: boolean;
   productId?: string | string[];
 };
 

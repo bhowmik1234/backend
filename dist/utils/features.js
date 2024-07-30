@@ -1,5 +1,6 @@
 import { myCache } from "../app.js";
 import { Product } from "../models/product.js";
+import { v2 as cloudinary } from "cloudinary";
 export const invalidateCache = ({ product, order, admin, userId, orderId, productId, }) => {
     if (product) {
         const productKeys = [
@@ -73,4 +74,33 @@ export const getChartData = ({ length, docArr, today, property, }) => {
         }
     });
     return data;
+};
+const getBase64 = (file) => `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+export const uploadToCloudinary = async (files) => {
+    const promises = files.map(async (file) => {
+        return new Promise((resolve, reject) => {
+            cloudinary.uploader.upload(getBase64(file), (error, result) => {
+                if (error)
+                    return reject(error);
+                resolve(result);
+            });
+        });
+    });
+    const result = await Promise.all(promises);
+    return result.map((i) => ({
+        public_id: i.public_id,
+        url: i.secure_url,
+    }));
+};
+export const deleteFromCloudinary = async (publicIds) => {
+    const promises = publicIds.map((id) => {
+        return new Promise((resolve, reject) => {
+            cloudinary.uploader.destroy(id, (error, result) => {
+                if (error)
+                    return reject(error);
+                resolve();
+            });
+        });
+    });
+    await Promise.all(promises);
 };
